@@ -12,12 +12,14 @@ def get_args():
                         help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
                         help='Specifies the absolute path to the output file')
+
     debug = parser.add_mutually_exclusive_group()
+
     debug.add_argument('-d', '--debug',
                        action='store_true',
                        help='use option to get feedback about completing')
-    args = parser.parse_args()
-    return args
+
+    return parser.parse_args()
 
 
 def write_row(row, valid, destination, mode='a'):

@@ -11,17 +11,20 @@ def get_args():
                         help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
                         help='Specifies the absolute path to the output file')
+
     debug = parser.add_mutually_exclusive_group()
+
     debug.add_argument('-d', '--debug',
                        action='store_true',
                        help='use option to get feedback about completing')
-    args = parser.parse_args()
-    return args
+
+    return parser.parse_args()
 
 
 def df_to_csv(df, destination, selected_columns):
     clear_df = df[df['valid'].astype(bool) == True]
     clear_df[selected_columns].to_csv(f"{destination}.csv", index=False, header=True)
+
     bad_df = df[df['valid'].astype(bool) == False]
     bad_df[selected_columns].to_csv(f"{destination}_bad.csv", index=False, header=True)
 
@@ -31,12 +34,14 @@ def compile_additional_info(row, sep):
     company = str(row['Company'])
     department = str(row['Department'])
     position = str(row['Position'])
+
     return sep.join([f'ssn:{ssn}', f'company:{company}', f'department:{department}', f'position:{position}'])
 
 
 def normalize_mobile_number(row):
     digits_only = re.sub(r'\D', '', row)
     formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
+
     return formatted_number
 
 
@@ -44,10 +49,12 @@ def validation_process(row):
     pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
     pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
     pattern_mobile = r'^[1]?\d{10}$'
+
     ssn = bool(re.match(pattern_ssn, row['SSN']))
     first_name = bool(re.match(pattern_name, row['First Name']))
     last_name = bool(re.match(pattern_name, row['Last Name']))
     mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['Mobile number'])))
+
     return all([ssn, first_name, last_name, mobile])
 
 
@@ -57,10 +64,13 @@ def split_address(row):
         state_pattern = r'([A-Za-z]+)'
         match = re.search(state_pattern, state.strip())
         state = match.group(1) if match else None
+
         return address, city, state
+
     except ValueError:
         state_pattern = r',\s*([A-Za-z]+)(?:\s|\-)\d+'
         match = re.search(state_pattern, row)
+
         if match:
             return row, None, match.group(1)
         else:
