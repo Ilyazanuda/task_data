@@ -92,6 +92,42 @@ def processing(df, destination, sep):
     df_to_csv(ready_df, destination, selected_columns)
 
 
+def get_validated_row(row):
+    pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
+    pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    pattern_mobile = r'^[1]?\d{10}$'
+    ssn = bool(re.match(pattern_ssn, row['ssn']))
+    first_name = bool(re.match(pattern_name, row['first_name']))
+    last_name = bool(re.match(pattern_name, row['last_number']))
+    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['mobile_number'])))
+    return row, all([ssn, first_name, last_name, mobile])
+
+
+def process_sheet(sheet):
+    # first_name - 0
+    # last_name - 1
+    # ssn - 2
+    # address - 3
+    # company - 4
+    # department - 5
+    # position - 6
+    # zip - 7
+    # mobile_number - 8
+    selected_columns = {0: 'first_name',
+                        1: 'last_name',
+                        2: 'ssn',
+                        3: 'address',
+                        4: 'company',
+                        5: 'department',
+                        6: 'position',
+                        7: 'zip',
+                        8: 'mobile_number'}
+    for row in sheet:
+        # dict with elements of row
+        raw_row = {selected_columns[num]: cell.value for num, cell in enumerate(row) if num in selected_columns}
+        raw_row, valid = validation_process(raw_row)
+
+
 def main():
     source, destination = get_args().source, get_args().destination
 
@@ -110,15 +146,14 @@ def main():
     if destination and source:
         try:
             sep = '|'
-            book = openpyxl.load_workbook(source).active
+            sheet = openpyxl.load_workbook(source).active
 
-            for row in book:
-                for cell in row:
-                    print(cell)
+            process_sheet(sheet)
+
             # df = pd.read_excel(io=source, sheet_name=sheet_name)
             # processing(df, destination, sep)
             #
-            # print(f'CSV is ready. Path: {destination + ".csv"}')
+            print(f'CSV is ready. Path: {destination + ".csv"}')
 
         except FileNotFoundError:
             print('Src file not found')
