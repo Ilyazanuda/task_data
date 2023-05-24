@@ -21,7 +21,7 @@ def df_to_csv(df, destination, selected_columns):
     bad_df[selected_columns].to_csv(f"{destination}_bad.csv", index=False, header=True)
 
 
-def add_additional_info(row, sep):
+def compile_additional_info(row, sep):
     ssn = str(row['SSN'])
     company = str(row['Company'])
     department = str(row['Department'])
@@ -29,10 +29,10 @@ def add_additional_info(row, sep):
     return sep.join([f'ssn:{ssn}', f'company:{company}', f'department:{department}', f'position:{position}'])
 
 
-def normalize_phone(row):
+def normalize_mobile_number(row):
     digits_only = re.sub(r'\D', '', row)
-    formatted_phone = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
-    return formatted_phone
+    formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
+    return formatted_number
 
 
 def validation_process(row):
@@ -46,7 +46,7 @@ def validation_process(row):
     return all([ssn, first_name, last_name, mobile])
 
 
-def normalize_address(row):
+def split_address(row):
     try:
         address, city, state = [_.strip() for _ in row.split(',')]
         state_pattern = r'([A-Za-z]+)'
@@ -64,10 +64,10 @@ def normalize_address(row):
 
 def processing(df, destination, sep):
     df['valid'] = df.apply(validation_process, axis=1)
-    df['user_additional_info'] = df.apply(add_additional_info, args=(sep,), axis=1)
+    df['user_additional_info'] = df.apply(compile_additional_info, args=(sep,), axis=1)
     df['user_fullname'] = df.apply(lambda row: f"{str(row['First Name'])} {str(row['Last Name'])}", axis=1)
-    df[['address', 'city', 'state']] = df['Address'].apply(normalize_address).apply(pd.Series)
-    df['Mobile number'] = df['Mobile number'].apply(normalize_phone)
+    df[['address', 'city', 'state']] = df['Address'].apply(split_address).apply(pd.Series)
+    df['Mobile number'] = df['Mobile number'].apply(normalize_mobile_number)
 
     ready_df = pd.DataFrame({'name': df['First Name'],
                              'address': df['address'],
