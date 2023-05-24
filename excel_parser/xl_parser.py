@@ -40,7 +40,10 @@ def compile_additional_info(row, sep):
 
 def normalize_mobile_number(row):
     digits_only = re.sub(r'\D', '', row)
-    formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
+    if len(digits_only) == 11:
+        formatted_number = re.sub(r'(1)(\d{3})(\d{3})(\d{4})', r'\1-\2-\3-\4', digits_only)
+    else:
+        formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
 
     return formatted_number
 
@@ -60,8 +63,8 @@ def validation_process(row):
 
 def split_address(row):
     try:
-        address, city, state = [_.strip() for _ in row.split(',')]
         state_pattern = r'([A-Za-z]+)'
+        address, city, state = [_.strip() for _ in row.split(',')]
         match = re.search(state_pattern, state.strip())
         state = match.group(1) if match else None
 

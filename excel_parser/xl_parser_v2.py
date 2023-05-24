@@ -37,8 +37,8 @@ def get_clear_row(row, sep):
 
     def get_normalized_address(address_row):
         try:
-            address, city, state = [_.strip() for _ in address_row.split(',')]
             state_pattern = r'([A-Za-z]+)'
+            address, city, state = [_.strip() for _ in address_row.split(',')]
             match = re.search(state_pattern, state.strip())
             state = match.group(1) if match else None
             return address, city, state
@@ -54,7 +54,11 @@ def get_clear_row(row, sep):
 
     def get_normalized_mobile_number(number):
         digits_only = re.sub(r'\D', '', number)
-        formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
+
+        if len(digits_only) == 11:
+            formatted_number = re.sub(r'(1)(\d{3})(\d{3})(\d{4})', r'\1-\2-\3-\4', digits_only)
+        else:
+            formatted_number = re.sub(r'(\d{3})(\d{3})(\d{4})', r'\1-\2-\3', digits_only)
 
         return formatted_number
 
