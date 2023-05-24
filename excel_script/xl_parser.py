@@ -1,5 +1,6 @@
 import pandas as pd
 import argparse
+import time
 import re
 import os
 
@@ -10,6 +11,10 @@ def get_args():
                         help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
                         help='Specifies the absolute path to the output file')
+    debug = parser.add_mutually_exclusive_group()
+    debug.add_argument('-d', '--debug',
+                       action='store_true',
+                       help='use option to get feedback about completing')
     args = parser.parse_args()
     return args
 
@@ -92,7 +97,8 @@ def processing(df, destination, sep):
 
 
 def main():
-    source, destination = get_args().source, get_args().destination
+    source, destination, debug = get_args().source, get_args().destination, get_args().debug
+    start = time.time()
 
     if not source:
         source = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -114,6 +120,9 @@ def main():
             processing(df, destination, sep)
 
             print(f'CSV is ready. Path: {destination + ".csv"}')
+
+            if debug:
+                print(f'Time spent to execution: {time.time() - start} sec.')
 
         except FileNotFoundError:
             print('Src file not found')
