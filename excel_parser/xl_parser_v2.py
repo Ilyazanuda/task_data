@@ -33,7 +33,7 @@ def write_row(row, valid, destination, mode='a'):
             csv_writer.writerow(row)
 
 
-def get_clear_row(row, sep):
+def get_clear_row(row, sep, source):
 
     def get_normalized_address(address_row):
         # variant 2
@@ -80,16 +80,24 @@ def get_clear_row(row, sep):
 
         return formatted_number
 
+    def compile_additional_info(additional_row):
+        additional_info = list()
+        additional_info.append(f"ssn:{additional_row['ssn']}" if additional_row['ssn'] else None)
+        additional_info.append(f"company:{additional_row['company']}" if additional_row['company'] else None)
+        additional_info.append(f"department:{additional_row['department']}" if additional_row['department'] else None)
+        additional_info.append(f"position:{additional_row['position']}" if additional_row['position'] else None)
+        additional_info = [info for info in additional_info if info is not None]
+
+        return sep.join(additional_info)
+
     clear_row = ['' for i in range(8)]
-    clear_row[0] = row['first_name']
+    clear_row[0] = os.path.basename(source)
     clear_row[1], clear_row[3], clear_row[4] = get_normalized_address(row['address'])
     clear_row[2] = ' '.join([row['first_name'], row['last_name']])
     clear_row[5] = row['zip']
     clear_row[6] = get_normalized_mobile_number(row['mobile_number'])
-    clear_row[7] = sep.join([f'ssn:{row["ssn"]}',
-                             f'company:{row["company"]}',
-                             f'department:{row["department"]}',
-                             f'position:{row["position"]}'])
+    clear_row[7] = compile_additional_info(row)
+
     return clear_row
 
 
@@ -106,7 +114,7 @@ def get_validated_row(row):
     return row, all([ssn, first_name, last_name, mobile])
 
 
-def process_sheet(sheet, destination):
+def process_sheet(sheet, source, destination):
     selected_columns = {0: 'first_name',
                         1: 'last_name',
                         2: 'ssn',
@@ -125,7 +133,7 @@ def process_sheet(sheet, destination):
         # dict with elements of row
         raw_row = {selected_columns[num]: cell.value for num, cell in enumerate(row) if num in selected_columns}
         raw_row, valid = get_validated_row(raw_row)
-        clear_row = get_clear_row(raw_row, sep)
+        clear_row = get_clear_row(raw_row, sep, source)
         write_row(clear_row, valid, destination)
 
 
@@ -148,7 +156,7 @@ def main():
     if destination and source:
         try:
             sheet = openpyxl.load_workbook(source).active
-            process_sheet(sheet, destination)
+            process_sheet(sheet, source, destination)
 
             print(f'CSV is ready. Path: {destination + ".csv"}')
 

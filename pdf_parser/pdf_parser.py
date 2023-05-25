@@ -83,9 +83,15 @@ def validation_process(row):
     return all([name, tel, email, dob])
 
 
-def processing(df, destination):
+def compile_additional_info(row):
+    return f"nationality:{str(row['nationality'])}" if row['nationality'] is not None else None
+
+
+def processing(df, source, destination):
     df['valid'] = df.apply(validation_process, axis=1)
-    df['user_additional_info'] = df.apply(lambda row: f"nationality:{str(row['nationality'])}", axis=1)
+    df['user_additional_info'] = df.apply(compile_additional_info, axis=1)
+    df['user_fullname'] = df['name']
+    df['name'] = os.path.basename(source)
     df[['address', 'city', 'state', 'zip']] = df['address'].apply(split_address).apply(pd.Series)
     df['tel'] = df['tel'].apply(normalize_mobile_number)
     df['dob'] = df['date'].apply(normalize_date)
@@ -93,6 +99,7 @@ def processing(df, destination):
     ready_df = pd.DataFrame({'name': df['name'],
                              'usermail': df['email'],
                              'address': df['address'],
+                             'user_fullname': df['user_fullname'],
                              'city': df['city'],
                              'state': df['state'],
                              'zip': df['zip'],
@@ -104,6 +111,7 @@ def processing(df, destination):
     selected_columns = ['name',
                         'usermail',
                         'address',
+                        'user_fullname',
                         'city',
                         'state',
                         'zip',
@@ -149,7 +157,7 @@ def main():
             for field, data in grouped_dates:
                 transposed_df[str(field)] = pd.Series(data.values)
 
-            processing(transposed_df, destination)
+            processing(transposed_df, source, destination)
 
             print(f'CSV is ready. Path: {destination + ".csv"}')
 

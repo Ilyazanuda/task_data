@@ -30,12 +30,14 @@ def df_to_csv(df, destination, selected_columns):
 
 def compile_additional_info(row):
     sep = '|'
-    ssn = str(row['SSN'])
-    company = str(row['Company'])
-    department = str(row['Department'])
-    position = str(row['Position'])
+    additional_info = list()
+    additional_info.append(f"ssn:{str(row['SSN'])}" if str(row['SSN']) else None)
+    additional_info.append(f"company:{str(row['Company'])}" if str(row['Company']) else None)
+    additional_info.append(f"department:{str(row['Department'])}" if str(row['Department']) else None)
+    additional_info.append(f"position:{str(row['Position'])}" if str(row['Position']) else None)
+    additional_info = [info for info in additional_info if info is not None]
 
-    return sep.join([f'ssn:{ssn}', f'company:{company}', f'department:{department}', f'position:{position}'])
+    return sep.join(additional_info)
 
 
 def normalize_mobile_number(row):
@@ -96,14 +98,15 @@ def split_address(row):
     #         return row, None, None
 
 
-def processing(df, destination):
+def processing(df, source, destination):
     df['valid'] = df.apply(validation_process, axis=1)
     df['user_additional_info'] = df.apply(compile_additional_info, axis=1)
     df['user_fullname'] = df.apply(lambda row: f"{str(row['First Name'])} {str(row['Last Name'])}", axis=1)
+    df['name'] = os.path.basename(source)
     df[['address', 'city', 'state']] = df['Address'].apply(split_address).apply(pd.Series)
     df['Mobile number'] = df['Mobile number'].apply(normalize_mobile_number)
 
-    ready_df = pd.DataFrame({'name': df['First Name'],
+    ready_df = pd.DataFrame({'name': df['name'],
                              'address': df['address'],
                              'user_fullname': df['user_fullname'],
                              'city': df['city'],
@@ -145,7 +148,7 @@ def main():
         try:
             sheet_name = pd.ExcelFile(source).sheet_names[0]
             df = pd.read_excel(io=source, sheet_name=sheet_name)
-            processing(df, destination)
+            processing(df, source, destination)
 
             print(f'CSV is ready. Path: {destination + ".csv"}')
 
