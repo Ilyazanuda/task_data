@@ -61,7 +61,6 @@ def normalize_mobile_number(row):
 
 def normalize_date(row):
     try:
-        datetime.strptime(row, "%d %B %Y")
         date = datetime.strptime(row, "%d %B %Y").date()
         if date > datetime.now().date():
             date = row
