@@ -1,4 +1,8 @@
+#import pdfplumber
+from datetime import datetime
+from tabula import read_pdf
 import pandas as pd
+import numpy as np
 import argparse
 import time
 import re
@@ -23,19 +27,25 @@ def get_args():
 
 def df_to_csv(df, destination, selected_columns):
     clear_df = df[df['valid'].astype(bool) == True]
-    bad_df = df[df['valid'].astype(bool) == False]
     clear_df[selected_columns].to_csv(f"{destination}.csv", index=False, header=True)
+
+    bad_df = df[df['valid'].astype(bool) == False]
     bad_df[selected_columns].to_csv(f"{destination}_bad.csv", index=False, header=True)
 
 
-def compile_additional_info(row):
-    sep = '|'
-    ssn = str(row['SSN'])
-    company = str(row['Company'])
-    department = str(row['Department'])
-    position = str(row['Position'])
+def split_address(row):
+    if re.search(r',+', row):
+        split_pattern = r"^([A-Za-z.\s']*\d[A-Za-z.\d\s']*)?,?\s?([A-Z'\sa-z]*?)?,?\s?([A-Z]{2})?\s?([\d-]*)?$"
+        match = re.search(split_pattern, row)
 
-    return sep.join([f'ssn:{ssn}', f'company:{company}', f'department:{department}', f'position:{position}'])
+        if match:
+            address = match.group(1) if match.group(1) else None
+            city = match.group(2) if match.group(2) else None
+            state = match.group(3) if match.group(3) else None
+            zipcode = match.group(4) if match.group(4) else None
+            return address, city, state, zipcode
+
+    return row, None, None, None
 
 
 def normalize_mobile_number(row):
@@ -49,77 +59,57 @@ def normalize_mobile_number(row):
     return formatted_number
 
 
+def normalize_date(row):
+    try:
+        datetime.strptime(row, "%d %B %Y")
+        date = datetime.strptime(row, "%d %B %Y").date()
+        if date > datetime.now().date():
+            date = row
+    except ValueError:
+        date = row
+
+    return date
+
+
 def validation_process(row):
-    pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
     pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
-    pattern_mobile = r'^[1]?\d{10}$'
+    pattern_tel = r'^[1]?\d{10}$'
+    pattern_email = r'^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$'
 
-    ssn = bool(re.match(pattern_ssn, row['SSN']))
-    first_name = bool(re.match(pattern_name, row['First Name']))
-    last_name = bool(re.match(pattern_name, row['Last Name']))
-    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['Mobile number'])))
+    name = bool(re.match(pattern_name, row['name']))
+    tel = bool(re.match(pattern_tel, re.sub(r'\(|\)|-|\.|\s', '', row['tel'])))
+    email = bool(re.match(pattern_email, row['email']))
+    dob = bool(row['date'] != normalize_date(row['date']))
 
-    return all([ssn, first_name, last_name, mobile])
-
-
-def split_address(row):
-    # variant 2
-    if re.search(r',+', row):
-        split_pattern = r"^([A-Za-z.\s']*\d[A-Za-z.\d\s']*)?,?\s?([A-Z'\sa-z]*?)?,?\s?([A-Z]{2})?\s?([\d-]*)?$"
-        match = re.search(split_pattern, row)
-
-        if match:
-            address = match.group(1) if match.group(1) else None
-            city = match.group(2) if match.group(2) else None
-            state = match.group(3) if match.group(3) else None
-            # zipcode = match.group(4) if match.group(4) else None
-            return address, city, state
-
-    return row, None, None
-
-    # variant 1
-    # try:
-    #     state_pattern = r'([A-Za-z]+)'
-    #     address, city, state = [_.strip() for _ in row.split(',')]
-    #     match = re.search(state_pattern, state)
-    #     state = match.group(1) if match else None
-    #
-    #     return address, city, state
-    #
-    # except ValueError:
-    #     state_pattern = r',\s*([A-Za-z]+)(?:\s|\-)\d+'
-    #     match = re.search(state_pattern, row)
-    #
-    #     if match:
-    #         return row, None, match.group(1)
-    #     else:
-    #         return row, None, None
+    return all([name, tel, email, dob])
 
 
 def processing(df, destination):
     df['valid'] = df.apply(validation_process, axis=1)
-    df['user_additional_info'] = df.apply(compile_additional_info, axis=1)
-    df['user_fullname'] = df.apply(lambda row: f"{str(row['First Name'])} {str(row['Last Name'])}", axis=1)
-    df[['address', 'city', 'state']] = df['Address'].apply(split_address).apply(pd.Series)
-    df['Mobile number'] = df['Mobile number'].apply(normalize_mobile_number)
+    df['user_additional_info'] = df.apply(lambda row: f"nationality:{str(row['nationality'])}", axis=1)
+    df[['address', 'city', 'state', 'zip']] = df['address'].apply(split_address).apply(pd.Series)
+    df['tel'] = df['tel'].apply(normalize_mobile_number)
+    df['dob'] = df['date'].apply(normalize_date)
 
-    ready_df = pd.DataFrame({'name': df['First Name'],
+    ready_df = pd.DataFrame({'name': df['name'],
+                             'usermail': df['email'],
                              'address': df['address'],
-                             'user_fullname': df['user_fullname'],
                              'city': df['city'],
                              'state': df['state'],
-                             'zip': df['Zip'],
-                             'tel': df['Mobile number'],
+                             'zip': df['zip'],
+                             'tel': df['tel'],
+                             'dob': df['dob'],
                              'user_additional_info': df['user_additional_info'],
                              'valid': df['valid']})
 
     selected_columns = ['name',
+                        'usermail',
                         'address',
-                        'user_fullname',
                         'city',
                         'state',
                         'zip',
                         'tel',
+                        'dob',
                         'user_additional_info']
 
     df_to_csv(ready_df, destination, selected_columns)
@@ -131,7 +121,7 @@ def main():
 
     if not source:
         source = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                              'excel', 'data.xlsx')
+                              'pdf', 'data_pdf.pdf')
 
     if destination:
         destination = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -143,9 +133,24 @@ def main():
 
     if destination and source:
         try:
-            sheet_name = pd.ExcelFile(source).sheet_names[0]
-            df = pd.read_excel(io=source, sheet_name=sheet_name)
-            processing(df, destination)
+            # old version needs x8 time for parsing from pdf
+            # with pdfplumber.open(source) as pdf:
+            #     page = pdf.pages[0]
+            #     table = page.extract_table()[1:]
+            #
+            # df = pd.DataFrame(table, columns=['field', 'data'])
+
+            df_tabula = read_pdf(source, encoding="ISO-8859-1", guess=False, stream=True, pages='all')
+            data_2d = np.squeeze(df_tabula)
+            df = pd.DataFrame(data_2d, columns=['field', 'data'])
+
+            grouped_dates = df.groupby('field')['data']
+            transposed_df = pd.DataFrame()
+
+            for field, data in grouped_dates:
+                transposed_df[str(field)] = pd.Series(data.values)
+
+            processing(transposed_df, destination)
 
             print(f'CSV is ready. Path: {destination + ".csv"}')
 

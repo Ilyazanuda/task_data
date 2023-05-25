@@ -36,21 +36,39 @@ def write_row(row, valid, destination, mode='a'):
 def get_clear_row(row, sep):
 
     def get_normalized_address(address_row):
-        try:
-            state_pattern = r'([A-Za-z]+)'
-            address, city, state = [_.strip() for _ in address_row.split(',')]
-            match = re.search(state_pattern, state.strip())
-            state = match.group(1) if match else None
-            return address, city, state
-
-        except ValueError:
-            state_pattern = r',\s*([A-Za-z]+)(?:\s|\-)\d+'
-            match = re.search(state_pattern, address_row)
+        # variant 2
+        if re.search(r',+', address_row):
+            split_pattern = r"^([A-Za-z.\s']*\d[A-Za-z.\d\s']*)?,?\s?([A-Z'\sa-z]*?)?,?\s?([A-Z]{2})?\s?([\d-]*)?$"
+            match = re.search(split_pattern, address_row)
 
             if match:
-                return address_row, None, match.group(1)
-            else:
-                return address_row, None, None
+                address = match.group(1) if match.group(1) else None
+                city = match.group(2) if match.group(2) else None
+                state = match.group(3) if match.group(3) else None
+                #zipcode = match.group(4) if match.group(4) else None
+                return address, city, state
+
+        return address_row, None, None
+
+        # variant 1
+        # try:
+        #     state_pattern = r'([A-Za-z]+)'
+        #
+        #     address, city, state = [_.strip() for _ in address_row.split(',')]
+        #
+        #     match = re.search(state_pattern, state)
+        #     state = match.group(1) if match else None
+        #
+        #     return address, city, state
+        #
+        # except ValueError:
+        #     state_pattern = r',\s*([A-Za-z]+)(?:\s|\-)\d+'
+        #     match = re.search(state_pattern, address_row)
+        #
+        #     if match:
+        #         return address_row, None, match.group(1)
+        #     else:
+        #         return address_row, None, None
 
     def get_normalized_mobile_number(number):
         digits_only = re.sub(r'\D', '', number)
