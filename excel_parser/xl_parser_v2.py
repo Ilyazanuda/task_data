@@ -11,7 +11,7 @@ def get_args():
     parser.add_argument('-src', '--source', metavar='<src-filename>',
                         help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
-                        help='Specifies the absolute path to the output file')
+                        help='Specifies the absolute path to the output file.')
 
     debug = parser.add_mutually_exclusive_group()
 
@@ -103,15 +103,17 @@ def get_clear_row(row, sep, source):
 
 def get_validated_row(row):
     pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
-    pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    # pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    pattern_name = r"^([A-Za-z\s.',-]*)$"
     pattern_mobile = r'^[1]?\d{10}$'
 
-    ssn = bool(re.match(pattern_ssn, row['ssn']))
-    first_name = bool(re.match(pattern_name, row['first_name']))
-    last_name = bool(re.match(pattern_name, row['last_name']))
-    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['mobile_number'])))
+    ssn = bool(re.match(pattern_ssn, row['ssn'])) if row['ssn'] else True
+    first_name = bool(re.match(pattern_name, row['first_name'])) if row['first_name'] else True
+    last_name = bool(re.match(pattern_name, row['last_name'])) if row['last_name'] else True
+    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['mobile_number'])))\
+        if row['mobile_number'] else True
 
-    return row, all([ssn, first_name, last_name, mobile])
+    return all([ssn, first_name, last_name, mobile])
 
 
 def process_sheet(sheet, source, destination):
@@ -124,15 +126,25 @@ def process_sheet(sheet, source, destination):
                         6: 'position',
                         7: 'zip',
                         8: 'mobile_number'}
+
+    result_header = ['name',
+                     'address',
+                     'user_fullname',
+                     'city',
+                     'state',
+                     'zip',
+                     'tel',
+                     'user_additional_info']
+
     sep = '|'
-    result_header = ['name', 'address', 'user_fullname', 'city', 'state', 'zip', 'tel', 'user_additional_info']
+
     write_row(result_header, False, destination, 'w')
     write_row(result_header, True, destination, 'w')
 
     for row in sheet.iter_rows(min_row=2):
         # dict with elements of row
         raw_row = {selected_columns[num]: cell.value for num, cell in enumerate(row) if num in selected_columns}
-        raw_row, valid = get_validated_row(raw_row)
+        valid = get_validated_row(raw_row)
         clear_row = get_clear_row(raw_row, sep, source)
         write_row(clear_row, valid, destination)
 

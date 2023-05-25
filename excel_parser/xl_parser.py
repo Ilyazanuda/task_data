@@ -10,7 +10,7 @@ def get_args():
     parser.add_argument('-src', '--source', metavar='<src-filename>',
                         help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
-                        help='Specifies the absolute path to the output file')
+                        help='Specifies the absolute path to the output file.')
 
     debug = parser.add_mutually_exclusive_group()
 
@@ -53,13 +53,15 @@ def normalize_mobile_number(row):
 
 def validation_process(row):
     pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
-    pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    # pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    pattern_name = r"^([A-Za-z\s.',-]*)$"
     pattern_mobile = r'^[1]?\d{10}$'
 
-    ssn = bool(re.match(pattern_ssn, row['SSN']))
-    first_name = bool(re.match(pattern_name, row['First Name']))
-    last_name = bool(re.match(pattern_name, row['Last Name']))
-    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['Mobile number'])))
+    ssn = bool(re.match(pattern_ssn, row['SSN'])) if row['SSN'] else True
+    first_name = bool(re.match(pattern_name, row['First Name'])) if row['First Name'] else True
+    last_name = bool(re.match(pattern_name, row['Last Name'])) if row['Last Name'] else True
+    mobile = bool(re.match(pattern_mobile, re.sub(r'\(|\)|-|\.|\s', '', row['Mobile number']))) \
+        if row['Mobile number'] else True
 
     return all([ssn, first_name, last_name, mobile])
 

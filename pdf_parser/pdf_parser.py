@@ -12,9 +12,9 @@ import os
 def get_args():
     parser = argparse.ArgumentParser(description='EXCEL to CSV parser')
     parser.add_argument('-src', '--source', metavar='<src-filename>',
-                        help='Specifies the absolute path to the source file. Default path - "excel/data.xlsx"')
+                        help='Specifies the absolute path to the source file. Default path - "pdf/pdf_data.pdf"')
     parser.add_argument('-dst', '--destination', metavar='<dst-filename>',
-                        help='Specifies the absolute path to the output file')
+                        help='Specifies the absolute path to the output file.')
 
     debug = parser.add_mutually_exclusive_group()
 
@@ -71,14 +71,14 @@ def normalize_date(row):
 
 
 def validation_process(row):
-    pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
+    pattern_name = r"^([A-Za-z\s.',-]*)$"
     pattern_tel = r'^[1]?\d{10}$'
     pattern_email = r'^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$'
 
-    name = bool(re.match(pattern_name, row['name']))
-    tel = bool(re.match(pattern_tel, re.sub(r'\(|\)|-|\.|\s', '', row['tel'])))
-    email = bool(re.match(pattern_email, row['email']))
-    dob = bool(row['date'] != normalize_date(row['date']))
+    name = bool(re.match(pattern_name, row['name'])) if row['name'] else True
+    tel = bool(re.match(pattern_tel, re.sub(r'\(|\)|-|\.|\s', '', row['tel']))) if row['tel'] else True
+    email = bool(re.match(pattern_email, row['email'])) if row['email'] else True
+    dob = bool(row['date'] != normalize_date(row['date'])) if row['date'] else True
 
     return all([name, tel, email, dob])
 
