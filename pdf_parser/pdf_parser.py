@@ -131,7 +131,7 @@ def main():
                               'pdf', 'data_pdf.pdf')
 
     if destination:
-        destination = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        destination = os.path.join(os.path.dirname(destination),
                                    destination.split('.')[0])
 
     if not destination and source:
@@ -140,7 +140,7 @@ def main():
 
     if destination and source:
         try:
-            # old version needs x8 time for parsing from pdf
+            # old version needs x8 time for parsing from pdf, but new needs java
             # with pdfplumber.open(source) as pdf:
             #     page = pdf.pages[0]
             #     table = page.extract_table()[1:]

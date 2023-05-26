@@ -139,7 +139,7 @@ def main():
                               'excel', 'data.xlsx')
 
     if destination:
-        destination = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        destination = os.path.join(os.path.dirname(destination),
                                    destination.split('.')[0])
 
     if not destination and source:
@@ -148,6 +148,8 @@ def main():
 
     if destination and source:
         try:
+            print(source)
+            print(destination)
             sheet_name = pd.ExcelFile(source).sheet_names[0]
             df = pd.read_excel(io=source, sheet_name=sheet_name)
             processing(df, source, destination)

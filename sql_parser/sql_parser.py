@@ -163,7 +163,7 @@ def main():
                               'sql', 'data.sql')
 
     if destination:
-        destination = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        destination = os.path.join(os.path.dirname(destination),
                                    destination.split('.')[0])
 
     if not destination and source:
