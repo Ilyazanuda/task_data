@@ -97,8 +97,6 @@ def get_validated_row(row):
     usermail = bool(re.match(pattern_email, row['usermail'])) if row['usermail'] else True
     birth = bool(int(row['birth']) != check_date(row['birth'])) if row['birth'] else True
 
-    if row['user_ID'] in [str(i) for i in [2085, 2098, 2583, 3363, 6465, 9145, 9917, 14713]]:
-        print(name, usermail, birth)
     return all([name, usermail, birth])
 
 
@@ -151,13 +149,8 @@ def processing(source, destination):
                 csv_row = temp_row
 
             raw_row = {selected_columns[num]: cell for num, cell in enumerate(csv_row) if num in selected_columns}
-
             valid = get_validated_row(raw_row)
-
             clear_row = get_clear_row(raw_row, sep, source)
-            if raw_row['user_ID'] in [str(i) for i in [2085, 2098, 2583, 3363, 6465, 9145, 9917, 14713]]:
-                print(clear_row)
-                print('-' * 8)
             write_row(clear_row, valid, destination)
 
 
