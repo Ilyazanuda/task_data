@@ -54,7 +54,7 @@ def normalize_mobile_number(row):
 def validation_process(row):
     pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
     # pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
-    pattern_name = r"^([A-Za-z\s.',-]*)$"
+    pattern_name = r"^([A-Za-z\s\.',-]*)$"
     pattern_mobile = r'^[1]?\d{10}$'
 
     ssn = bool(re.match(pattern_ssn, row['SSN'])) if row['SSN'] else True

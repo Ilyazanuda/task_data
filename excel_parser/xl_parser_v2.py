@@ -104,7 +104,7 @@ def get_clear_row(row, sep, source):
 def get_validated_row(row):
     pattern_ssn = r'^(?:\d[-.]?){2}\d[-.]?(?:\d[-.]?){4}\d[-.]?\d$'
     # pattern_name = r"^(?!.*[A-Z]{3})(?!.*[A-Z].*[A-Z].*[A-Z])(?:[A-Z][a-z']* ?)+$"
-    pattern_name = r"^([A-Za-z\s.',-]*)$"
+    pattern_name = r"^([A-Za-z\s\.',-]*)$"
     pattern_mobile = r'^[1]?\d{10}$'
 
     ssn = bool(re.match(pattern_ssn, row['ssn'])) if row['ssn'] else True

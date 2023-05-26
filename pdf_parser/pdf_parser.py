@@ -71,7 +71,7 @@ def normalize_date(row):
 
 
 def validation_process(row):
-    pattern_name = r"^([A-Za-z\s.',-]*)$"
+    pattern_name = r"^([A-Za-z\s\.',-]*)$"
     pattern_tel = r'^[1]?\d{10}$'
     pattern_email = r'^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$'
 
