@@ -90,13 +90,15 @@ def get_validated_row(row):
 
         return date
 
-    pattern_name = r"^([A-Za-z\s.',-]*)$"
+    pattern_name = r"^([A-Za-z\s\.',-]*)$"
     pattern_email = r'^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$'
 
     name = bool(re.match(pattern_name, row['name'])) if row['name'] else True
     usermail = bool(re.match(pattern_email, row['usermail'])) if row['usermail'] else True
     birth = bool(int(row['birth']) != check_date(row['birth'])) if row['birth'] else True
 
+    if row['user_ID'] in [str(i) for i in [2085, 2098, 2583, 3363, 6465, 9145, 9917, 14713]]:
+        print(name, usermail, birth)
     return all([name, usermail, birth])
 
 
@@ -153,9 +155,9 @@ def processing(source, destination):
             valid = get_validated_row(raw_row)
 
             clear_row = get_clear_row(raw_row, sep, source)
-            print(clear_row)
-            print('valid:', valid)
-            print('-' * 8)
+            if raw_row['user_ID'] in [str(i) for i in [2085, 2098, 2583, 3363, 6465, 9145, 9917, 14713]]:
+                print(clear_row)
+                print('-' * 8)
             write_row(clear_row, valid, destination)
 
 
