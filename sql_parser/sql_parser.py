@@ -91,6 +91,8 @@ def get_validated_row(row):
         return date
 
     pattern_name = r"^([A-Za-z\s\.',-]*)$"
+    # тщетно пытался в последний момент отловить HTML сущности
+    # pattern_name = r"|^([A-Za-z\s\.',-]*(&[a-zA-Z]*;)*[A-Za-z\s\.',-]*)$"
     pattern_email = r'^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$'
 
     name = bool(re.match(pattern_name, row['name'])) if row['name'] else True
